@@ -233,7 +233,6 @@ static const TCHAR help[] = {
 	_T("  T or Tt               Show exec tasks and their PCs.\n")
 	_T("  Td,Tl,Tr,Tp,Ts,TS,Ti,TO,TM,Tf Show devs, libs, resources, ports, semaphores,\n")
 	_T("                        residents, interrupts, doslist, memorylist, fsres.\n")
-	_T("  b                     Step to previous state capture position.\n")
 	_T("  M<a/b/s> <val>        Enable or disable audio channels, bitplanes or sprites.\n")
 	_T("  sp <addr> [<addr2][<size>] Dump sprite information.\n")
 	_T("  di <mode> [<track>]   Break on disk access. R=DMA read,W=write,RW=both,P=PIO.\n")
@@ -255,6 +254,8 @@ static const TCHAR help[] = {
 	_T("  dg <address>          Disassembly starting at <address> in GUI.\n")
 #endif
 	_T("  q                     Quit the emulator. You don't want to use this command.\n\n")
+
+	_T("  b[seo]                Blitter Log. s=start/restart, e=end, o=output, otherwise dump.\n\n")
 };
 
 void debug_help (void)
@@ -4736,6 +4737,47 @@ static void memwatch_dump (int num)
 	xfree (buf);
 }
 
+static void blitlog_start()
+{
+	console_out(_T("Starting (or restaring) blitter log\n"));
+}
+
+static void blitlog_end()
+{
+	console_out(_T("Ending (or restaring) blitter log\n"));
+}
+
+static void blitlog_output()
+{
+	console_out(_T("The magic!\n"));
+}
+
+static void blitlog_dump()
+{
+	console_out(_T("Dumping blitter log\n"));
+}
+
+static void blitlog(TCHAR** c)
+{
+	TCHAR nc = next_char(c);
+
+	if (nc == 's') {
+		blitlog_start();
+	}
+	else if (nc == 'e')
+	{
+		blitlog_end();
+	}
+	else if (nc == 'o')
+	{
+		blitlog_output();
+	}
+	else
+	{
+		blitlog_dump();
+	}
+}
+
 static void memwatch (TCHAR **c)
 {
 	int num;
@@ -7266,7 +7308,7 @@ static bool debug_line (TCHAR *input)
 							debug_bpl_mask_one = readhex(&inptr, NULL) & 0xff;
 						notice_screen_contents_lost(0);
 					}
-					console_out_f (_T("Bitplane mask: %02X (%02X)\n"), debug_bpl_mask, debug_bpl_mask_one);
+					console_out_f(_T("Bitplane mask: %02X (%02X)\n"), debug_bpl_mask, debug_bpl_mask_one);
 					break;
 				}
 			}
@@ -7454,8 +7496,8 @@ static bool debug_line (TCHAR *input)
 		case 'O':
 			break;
 		case 'b':
-			if (staterecorder (&inptr))
-				return true;
+			// staterecorder doesn't do anything so hijackig it
+			blitlog(&inptr);
 			break;
 		case 'u':
 			{
